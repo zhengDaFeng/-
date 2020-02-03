@@ -1,0 +1,9 @@
+C:\Users\zdfff\Documents\Visual Studio 2015\Projects\笔趣阁爬虫\笔趣阁爬虫\bin\Release\大风的笔趣阁爬虫.exe.config
+C:\Users\zdfff\Documents\Visual Studio 2015\Projects\笔趣阁爬虫\笔趣阁爬虫\bin\Release\大风的笔趣阁爬虫.exe
+C:\Users\zdfff\Documents\Visual Studio 2015\Projects\笔趣阁爬虫\笔趣阁爬虫\bin\Release\HtmlAgilityPack.dll
+C:\Users\zdfff\Documents\Visual Studio 2015\Projects\笔趣阁爬虫\笔趣阁爬虫\bin\Release\HtmlAgilityPack.pdb
+C:\Users\zdfff\Documents\Visual Studio 2015\Projects\笔趣阁爬虫\笔趣阁爬虫\bin\Release\HtmlAgilityPack.xml
+C:\Users\zdfff\Documents\Visual Studio 2015\Projects\笔趣阁爬虫\笔趣阁爬虫\obj\Release\大风的笔趣阁爬虫.Form1.resources
+C:\Users\zdfff\Documents\Visual Studio 2015\Projects\笔趣阁爬虫\笔趣阁爬虫\obj\Release\大风的笔趣阁爬虫.Properties.Resources.resources
+C:\Users\zdfff\Documents\Visual Studio 2015\Projects\笔趣阁爬虫\笔趣阁爬虫\obj\Release\大风的笔趣阁爬虫.csproj.GenerateResource.Cache
+C:\Users\zdfff\Documents\Visual Studio 2015\Projects\笔趣阁爬虫\笔趣阁爬虫\obj\Release\大风的笔趣阁爬虫.exe
