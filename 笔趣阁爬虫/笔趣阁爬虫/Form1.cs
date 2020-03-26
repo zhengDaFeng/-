@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -8,6 +10,11 @@ namespace 大风的笔趣阁爬虫
 {
     public partial class Form1 : Form
     {
+        /***********************
+         &nbsp;     ->      空格
+         <br>       ->      换行
+        ***********************/
+
         public Form1()
         {
             InitializeComponent();
@@ -37,6 +44,11 @@ namespace 大风的笔趣阁爬虫
             }
         }
 
+        private void btnBookInfo_Click(object sender, EventArgs e)
+        {
+            CheckBookID(textBox1.Text);
+        }
+
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             Stop();
@@ -58,10 +70,40 @@ namespace 大风的笔趣阁爬虫
             var web = new HtmlAgilityPack.HtmlWeb();
             var doc_book = web.Load($"{_strRootUrl}/book/{id}/");
             HtmlAgilityPack.HtmlNode node_book_name = doc_book.DocumentNode.SelectSingleNode("//div[@id='info']/h1");
+            HtmlAgilityPack.HtmlNode node_book_cover = doc_book.DocumentNode.SelectSingleNode("//div[@id='fmimg']/img");
+            HtmlAgilityPack.HtmlNodeCollection node_book_properties = doc_book.DocumentNode.SelectNodes("//div[@id='info']/p");
             if (node_book_name == null)
             {
                 MessageBox.Show($"找不到ID：{id}！");
                 return false;
+            }
+            if (node_book_cover != null)
+            {
+                var url = node_book_cover.Attributes["src"].Value;
+                System.Net.WebRequest request = System.Net.WebRequest.Create(url);
+                System.Net.WebResponse response = request.GetResponse();
+                System.IO.Stream responseStream = response.GetResponseStream();
+                Bitmap bmp = new Bitmap(responseStream);
+                if (pictureBox1.Image != null)
+                {
+                    pictureBox1.Image.Dispose();
+                }
+                pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+                pictureBox1.Image = bmp;
+            }
+            if (node_book_properties != null && node_book_properties.Count > 0)
+            {
+                textBox3.Text = "";
+                for (int i = 0; i < node_book_properties.Count; i++)
+                {
+                    string property = node_book_properties[i].InnerText;
+                    if (property.Contains("&nbsp;"))
+                    {
+                        property = property.Replace("&nbsp;", " ");
+                    }
+                    property += "\r\n";
+                    textBox3.AppendText(property);
+                }
             }
 
             return true;
@@ -112,6 +154,11 @@ namespace 大风的笔趣阁爬虫
             // 书名
             HtmlAgilityPack.HtmlNode node_book_name = doc_book.DocumentNode.SelectSingleNode("//div[@id='info']/h1");
             var book_name = node_book_name.InnerText;
+            var file = book_name + ".txt";
+            if (File.Exists(file))
+            {
+                File.Delete(file);
+            }
 
             // 章节数
             HtmlAgilityPack.HtmlNodeCollection listNode = doc_book.DocumentNode.SelectNodes("//div[@id='list']/dl[1]/dd");
@@ -125,57 +172,57 @@ namespace 大风的笔趣阁爬虫
             }));
 
             #region 章节循环
-
-            for (int i = 0; i < count_chapter; i++)
+            using (FileStream fs = new FileStream(file, FileMode.Append, FileAccess.Write, FileShare.Read))
+            using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
             {
-                var tmp = listNode[i].FirstChild.Attributes["href"].Value;
-                var site_chapter = _strRootUrl + tmp;
-                var doc_chapter = web.Load(site_chapter);
-                HtmlAgilityPack.HtmlNode node_chapter_title = doc_chapter.DocumentNode.SelectSingleNode("//div[@class='bookname']/h1");
-
-                // 章节名
-                var title_chapter = "";
-                var isAppendFront = false;
-                this.Invoke(new Action(() => {
-                    isAppendFront = checkBox1.Checked;
-                }));
-                if (isAppendFront)
-                    title_chapter = "第" + (i + 1).ToString() + "章 " + node_chapter_title.InnerText;
-                else
-                    title_chapter = node_chapter_title.InnerText;
-
-                // 章节内容
-                HtmlAgilityPack.HtmlNode node_chapter_content = doc_chapter.DocumentNode.SelectSingleNode("//div[@id='content']");
-                var content_chapter = node_chapter_content.InnerText;
-                content_chapter = content_chapter.Replace("&nbsp;&nbsp;&nbsp;&nbsp;", "\r\n");
-
-                // 写入TXT
-                using (FileStream fs = new FileStream(book_name + ".txt", FileMode.Append, FileAccess.Write, FileShare.Read))
-                using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8))
+                for (int i = 0; i < count_chapter; i++)
                 {
+                    var tmp = listNode[i].FirstChild.Attributes["href"].Value;
+                    var site_chapter = _strRootUrl + tmp;
+                    var doc_chapter = web.Load(site_chapter);
+                    HtmlAgilityPack.HtmlNode node_chapter_title = doc_chapter.DocumentNode.SelectSingleNode("//div[@class='bookname']/h1");
+
+                    // 章节名
+                    var title_chapter = "";
+                    var isAppendFront = false;
+                    this.Invoke(new Action(() => {
+                        isAppendFront = checkBox1.Checked;
+                    }));
+                    if (isAppendFront)
+                        title_chapter = "第" + (i + 1).ToString() + "章 " + node_chapter_title.InnerText;
+                    else
+                        title_chapter = node_chapter_title.InnerText;
+
+                    // 章节内容
+                    HtmlAgilityPack.HtmlNode node_chapter_content = doc_chapter.DocumentNode.SelectSingleNode("//div[@id='content']");
+                    var content_chapter = node_chapter_content.InnerHtml;
+                    content_chapter = content_chapter.Replace("<br>", "\r\n");
+                    content_chapter = content_chapter.Replace("&nbsp;", " ");
+
+                    // 写入TXT
                     sw.WriteLine(title_chapter);
                     sw.WriteLine(content_chapter);
-                }
 
-                // 更新进度
-                this.Invoke(new Action(() => {
-                    progressBar1.Value = i + 1;
-                    progressBar1.Update();
-                    label2.Text = $"{(i + 1).ToString()}/{count_chapter.ToString()}";
-                    textBox2.AppendText($"{title_chapter}\r\n");
-                }));
-
-                Thread.Sleep(1);
-
-                // 检查停止
-                if (!_IsRunning)
-                {
+                    // 更新进度
                     this.Invoke(new Action(() => {
-                        progressBar1.Value = 0;
+                        progressBar1.Value = i + 1;
                         progressBar1.Update();
-                        label2.Text = "0/0";
+                        label2.Text = $"{(i + 1).ToString()}/{count_chapter.ToString()}";
+                        textBox2.AppendText($"{title_chapter}\r\n");
                     }));
-                    return;
+
+                    Thread.Sleep(1);
+
+                    // 检查停止
+                    if (!_IsRunning)
+                    {
+                        this.Invoke(new Action(() => {
+                            progressBar1.Value = 0;
+                            progressBar1.Update();
+                            label2.Text = "0/0";
+                        }));
+                        return;
+                    }
                 }
             }
 
